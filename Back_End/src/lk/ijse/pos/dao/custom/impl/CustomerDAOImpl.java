@@ -32,6 +32,18 @@ e.printStackTrace();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM customer");
             return resultSet;
         }
-        
+
+    @Override
+    public boolean update(Customer obj) throws SQLException, ClassNotFoundException {
+        String sql="UPDATE  customer SET name=?,address=? WHERE id=?";
+        return CrudUtil.execute(sql,obj.getName(),obj.getAddress(),obj.getId());
     }
+
+    @Override
+    public boolean delete(String id) throws SQLException, ClassNotFoundException {
+        String sql="DELETE FROM customer WHERE id=?";
+        return CrudUtil.execute(sql,id);
+    }
+
+}
 

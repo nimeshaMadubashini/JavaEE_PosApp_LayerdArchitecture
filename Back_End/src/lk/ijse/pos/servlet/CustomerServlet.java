@@ -5,10 +5,7 @@ import lk.ijse.pos.bo.custom.CustomerBO;
 import lk.ijse.pos.dto.CustomerDTO;
 import lk.ijse.pos.util.ResponseUtil;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -50,6 +47,26 @@ public class CustomerServlet  extends HttpServlet {
         }
     }
 
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        JsonReader reader=Json.createReader(req.getReader());
+        JsonObject jbo = reader.readObject();
+        String id = jbo.getString("id");
+        String name = jbo.getString("name");
+        String address = jbo.getString("address");
+        CustomerDTO customerDTO=new CustomerDTO(id,name,address);
+        try {
+            if(customerBO.updateCustomer(customerDTO)){
+
+                resp.getWriter().print(ResponseUtil.getJson("Success", "Customer Updated..!"));
+            }else{
+                resp.getWriter().print(ResponseUtil.getJson("Failed", "Customer Updated Failed..!"));
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            resp.setStatus(500);
+            resp.getWriter().print(ResponseUtil.getJson("Error",e.getMessage()));
+        }
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -68,5 +85,23 @@ public class CustomerServlet  extends HttpServlet {
             resp.setStatus(500);
             resp.getWriter().print(ResponseUtil.getJson("error",e.getMessage()));
         }
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        String id = req.getParameter("cusID");
+        try {
+            if (customerBO.deleteCustomer(id)){
+
+                resp.getWriter().print(ResponseUtil.getJson("Success", "Customer Delete..!"));
+            }else{
+                resp.getWriter().print(ResponseUtil.getJson("Failed", "Customer Delete Failed..!"));
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            resp.setStatus(500);
+            resp.getWriter().print(ResponseUtil.getJson("Error",e.getMessage()));
+        }
+
     }
 }

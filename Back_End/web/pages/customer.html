@@ -301,7 +301,7 @@ alert(JSON.parse(error.responseText).message);
         $("#tblCustomer>tr").click(function () {
             let id = $(this).children().eq(0).text();
             let name = $(this).children().eq(1).text();
-            let address = $(this).children().eq(1).text();
+            let address = $(this).children().eq(2).text();
 
             $("#txtCustomerID").val(id);
             $("#txtCustomerName").val(name);
@@ -309,6 +309,54 @@ alert(JSON.parse(error.responseText).message);
 
         })
     }
+
+    $("#btnUpdate").click(function () {
+        let id = $("#txtCustomerID").val();
+        let name = $("#txtCustomerName").val();
+        let address = $("#txtCustomerAddress").val();
+var cusObj={
+    id:id,
+    name:name,
+    address:address
+}
+
+$.ajax( {
+    url:"customer",
+    method:"PUT",
+    contentType:"application/json",
+    data: JSON.stringify(cusObj),
+dataType:"json",
+    success:function (res) {
+        alert(res.message)
+        getAllcustomer();
+        clearValues();
+    },
+    error:function (error) {
+        alert(error.responseText.message)
+    }
+});
+
+    });
+
+    $("#btnCusDelete").click(function () {
+        let id = $("#txtCustomerID").val();
+        let consent = confirm("Do you want to delete.?");
+if(consent) {
+    $.ajax({
+        url: "customer?cusID=" + id,
+        method: "DELETE",
+        dataType: "json",
+        success: function (res) {
+            alert(res.message);
+            clearValues();
+            getAllcustomer();
+        },
+        error: function (error) {
+            alert(error.responseText.message)
+        }
+    })
+}
+    });
 </script>
 
 </body>

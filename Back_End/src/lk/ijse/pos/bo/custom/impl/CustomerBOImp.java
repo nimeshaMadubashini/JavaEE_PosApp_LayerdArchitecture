@@ -32,4 +32,14 @@ public class CustomerBOImp implements CustomerBO {
         rst.close();
         return allCustomer;
     }
+
+    @Override
+    public boolean updateCustomer(CustomerDTO cusDto) throws SQLException, ClassNotFoundException {
+        return customerDAO.update(new Customer(cusDto.getId(),cusDto.getName(),cusDto.getAddress()));
+    }
+
+    @Override
+    public boolean deleteCustomer(String id) throws SQLException, ClassNotFoundException {
+        return customerDAO.delete(id);
+    }
 }
