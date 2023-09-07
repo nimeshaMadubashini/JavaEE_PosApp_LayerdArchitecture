@@ -9,11 +9,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.RescaleOp;
 import java.io.IOException;
-@WebFilter(urlPatterns = "/*")
+/*
+@WebFilter(urlPatterns = "/*", filterName = "AuthFilter")
+*/
 public class AuthFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        
+        System.out.println("Auth init");
     }
 
     @Override
@@ -21,12 +23,15 @@ public class AuthFilter implements Filter {
         HttpServletResponse res = (HttpServletResponse) servletResponse;
         HttpServletRequest req = (HttpServletRequest) servletRequest;
         String auth = req.getHeader("Auth");
-        if(auth != null && auth.equals("user=admin,pass=users")){
-            filterChain.doFilter(servletRequest,servletResponse);
-        }else {
-            res.addHeader("Content-Type","application/json");
-            JsonObject authantication_fail = ResponseUtil.getJson("Auth-Error", "Authantication fail");
-            res.getWriter().print(authantication_fail);
+
+        if (auth != null && auth.equals("user=admin,pass=users")) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            System.out.println("Auth dofil");
+        } else {
+            res.addHeader("Content-Type", "application/json");
+            JsonObject authenticationFail = ResponseUtil.getJson("Auth-Error", "Authentication fail");
+            res.getWriter().print(authenticationFail);
+
         }
     }
 
@@ -34,4 +39,6 @@ public class AuthFilter implements Filter {
     public void destroy() {
 
     }
+
+
 }
