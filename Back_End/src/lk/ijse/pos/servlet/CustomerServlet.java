@@ -81,7 +81,7 @@ public class CustomerServlet  extends HttpServlet {
             }else {
                 resp.getWriter().print(ResponseUtil.getJson("error","Customer Added Fail"));
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             resp.setStatus(500);
             resp.getWriter().print(ResponseUtil.getJson("error",e.getMessage()));
         }

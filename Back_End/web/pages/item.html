@@ -62,7 +62,7 @@
                 <button type="button" class="btn btn-primary" id="btnItem">Add Item</button>
                 <button type="button" class="btn btn-danger" id="btnItemDelete">Remove</button>
                 <button type="button"class="btn btn-warning" id="btnItemUpdate">Update</button>
-                <button type="button" class="btn btn-success">Get All</button>
+                <button type="button" class="btn btn-success" id="btnItemGetAll">Get All</button>
                 <button type="reset" class="btn btn-danger" id="btn-clear">Clear All</button>
             </div>
 
@@ -216,5 +216,124 @@
 
 </script>
 -->
+<script>
+    getAllItem();
+
+    function blindClickEvent() {
+     $("#tblItem>tr").click(function () {
+         let code = $(this).children().eq(0).text();
+         let name = $(this).children().eq(1).text();
+         let qty = $(this).children().eq(2).text();
+         let price = $(this).children().eq(3).text();
+
+         $("#itemCode").val(code);
+        $("#itemName").val(name);
+          $("#itemQty").val(qty);
+          $("#itemPrice").val(price);
+
+
+     })
+    }
+    $("#btnItem").click(function () {
+        let formdata=$("#itemForm").serialize();
+        $.ajax({
+            url:"item",
+            method:"POST",
+            data:formdata,
+            dataType:"json",
+
+            success:function (res) {
+                alert(res.message);
+                setTextFeildValueEmpty();
+                getAllItem();
+
+            },
+            error:function (error) {
+                alert(error.responseText.message)
+            }
+        })
+    });
+
+    function getAllItem() {
+        $("#tblItem").empty();
+        $.ajax({
+            url:"/pos/pages/item",
+            method:"get",
+            success:function (res) {
+                let  item=res.data;
+                for (let i in item) {
+                    let itm=item[i];
+                    let code = itm.code;
+                    let name = itm.name;
+                    let qty = itm.qty;
+                    let price = itm.price;
+                    let row=`<tr><td>${code}</td><td>${name}</td><td>${qty}</td><td>${price}</td></tr>`
+                    $("#tblItem").append(row)
+                }
+                blindClickEvent();
+            },
+            error:function (error) {
+                alert(error.responseText.message);
+            }
+        })
+    }
+    $("#btnItemGetAll").click(function () {
+        getAllItem();
+    });
+
+    function setTextFeildValueEmpty() {
+        let code = $("#itemCode").val(" ");
+        let name = $("#itemName").val(" ");
+        let qty = $("#itemQty").val(" ");
+        let price = $("#itemPrice").val(" ");
+
+    }
+    $("#btnItemUpdate").click(function () {
+        let code = $("#itemCode").val();
+        let name = $("#itemName").val();
+        let qty = $("#itemQty").val();
+        let price = $("#itemPrice").val();
+
+        let itemObj={
+            code:code,
+            name:name,
+            qty:qty,
+            price:price
+        }
+        $.ajax({
+            url:"/pos/pages/item",
+            method:"put",
+            data:JSON.stringify(itemObj),
+            dataType:"json",
+            contentType:"application/json",
+            success:function (res) {
+                alert(res.message)
+                getAllItem();
+                setTextFeildValueEmpty();
+            },
+            error:function (error) {
+                alert(error.responseText.message)
+            }
+        })
+    });
+
+    $("#btnItemDelete").click(function () {
+        let code =$("#itemCode").val();
+            $.ajax({
+                url:"/pos/pages/item?code="+code,
+                method:"DELETE",
+                dataType: "json",
+                success:function (res) {
+                    alert(res.message);
+                    getAllItem();
+                    setTextFeildValueEmpty();
+                },
+                error:function (error) {
+                    alert(error.responseText.message)
+                }
+            });
+
+    })
+</script>
 </body>
 </html>

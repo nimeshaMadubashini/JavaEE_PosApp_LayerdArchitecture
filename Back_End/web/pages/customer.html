@@ -251,6 +251,7 @@ alert(JSON.parse(error.responseText).message);
                 console.log(res)
                 console.log("Response message:", res.message);
                 clearValues();
+                getAllcustomer();
             },
             error: function (error) {
                 alert(JSON.parse(error.responseText).message);

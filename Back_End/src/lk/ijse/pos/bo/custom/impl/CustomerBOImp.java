@@ -14,7 +14,7 @@ import java.util.List;
 public class CustomerBOImp implements CustomerBO {
     CustomerDAO customerDAO= (CustomerDAO) DAOFactory.getDaoFactory().getDo(DAOFactory.DoType.Customer);
     @Override
-    public boolean saveCustomer(CustomerDTO cusDto) throws SQLException {
+    public boolean saveCustomer(CustomerDTO cusDto) throws SQLException, ClassNotFoundException {
         return customerDAO.save(new Customer(cusDto.getId(),cusDto.getName(),cusDto.getAddress()));
     }
 
