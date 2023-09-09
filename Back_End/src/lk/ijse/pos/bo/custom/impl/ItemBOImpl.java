@@ -44,4 +44,15 @@ allItem.add(dto);
     public boolean deleteItem(String id) throws SQLException, ClassNotFoundException {
         return itemDAO.delete(id);
     }
+
+    @Override
+    public ItemDTO searchItem(String id) throws SQLException, ClassNotFoundException {
+        Item dto = itemDAO.search(id);
+        return new ItemDTO(dto.getCode(),dto.getName(),dto.getQty(),dto.getPrice());
+    }
+
+    @Override
+    public ArrayList<String> loadItemId() throws SQLException, ClassNotFoundException {
+        return itemDAO.loadId();
+    }
 }

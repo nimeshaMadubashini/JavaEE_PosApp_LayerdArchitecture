@@ -3,6 +3,7 @@ package lk.ijse.pos.dao.custom.impl;
 import lk.ijse.pos.dao.custom.CustomerDAO;
 import lk.ijse.pos.db.DBConnection;
 import lk.ijse.pos.entity.Customer;
+import lk.ijse.pos.entity.Item;
 import lk.ijse.pos.util.CrudUtil;
 
 import java.sql.*;
@@ -43,6 +44,40 @@ e.printStackTrace();
     public boolean delete(String id) throws SQLException, ClassNotFoundException {
         String sql="DELETE FROM customer WHERE id=?";
         return CrudUtil.execute(sql,id);
+    }
+
+    @Override
+    public Customer search(String id) throws SQLException, ClassNotFoundException {
+        Connection connection = DBConnection.getDbConnection().getConnection();
+        PreparedStatement pstm = connection.prepareStatement("SELECT  * FROM customer WHERE id=?");
+        pstm.setString(1,id);
+        ResultSet set = pstm.executeQuery();
+        if (set.next()){
+            return new Customer(
+                    set.getString("id"),
+                    set.getString("name"),
+                    set.getString("address")
+
+            );
+
+        }
+        set.close();
+        return null;
+    }
+
+
+    @Override
+    public ArrayList<String> loadId() throws SQLException, ClassNotFoundException {
+        Connection connection = DBConnection.getDbConnection().getConnection();
+        String sql="SELECT id  FROM customer";
+        PreparedStatement pstm = connection.prepareStatement(sql);
+        ResultSet rest = pstm.executeQuery();
+        ArrayList<String> idList=new ArrayList<>();
+        while (rest.next()){
+            idList.add(rest.getString(1));
+        }
+        rest.close();
+        return idList;
     }
 
 }

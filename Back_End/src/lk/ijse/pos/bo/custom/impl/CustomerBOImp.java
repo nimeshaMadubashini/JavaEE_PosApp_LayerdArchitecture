@@ -42,4 +42,18 @@ public class CustomerBOImp implements CustomerBO {
     public boolean deleteCustomer(String id) throws SQLException, ClassNotFoundException {
         return customerDAO.delete(id);
     }
+
+    @Override
+    public CustomerDTO searchCustomer(String id) throws SQLException, ClassNotFoundException {
+        Customer customer = customerDAO.search(id);
+        System.out.println(customer.getId()+customer.getName()+customer.getAddress());
+        return new CustomerDTO(customer.getId(),customer.getName(),customer.getAddress());
+
+    }
+
+    @Override
+    public ArrayList<String> loadCustomerId() throws SQLException, ClassNotFoundException {
+        return customerDAO.loadId();
+
+    }
 }

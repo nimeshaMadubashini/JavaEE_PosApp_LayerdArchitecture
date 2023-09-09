@@ -7,6 +7,7 @@ import lk.ijse.pos.entity.Item;
 import lk.ijse.pos.util.CrudUtil;
 
 import java.sql.*;
+import java.util.ArrayList;
 
 public class ItemDAOImpl implements ItemDAO {
     @Override
@@ -33,5 +34,36 @@ return  CrudUtil.execute(sql,obj.getName(),obj.getQty(),obj.getPrice(),obj.getCo
     @Override
     public boolean delete(String id) throws SQLException, ClassNotFoundException {
         return CrudUtil.execute("DELETE FROM item WHERE code=?",id);
+    }
+
+    @Override
+    public Item search(String id) throws SQLException, ClassNotFoundException {
+        Connection connection = DBConnection.getDbConnection().getConnection();
+        PreparedStatement pstm = connection.prepareStatement("SELECT  * FROM item WHERE code=?");
+        pstm.setString(1,id);
+        ResultSet set = pstm.executeQuery();
+        if (set.next()){
+            return new Item(
+              set.getString("code"),
+              set.getString("name"),
+              set.getDouble("qty"),
+              set.getDouble("price")
+            );
+        }
+        set.close();
+        return null;
+    }
+
+    @Override
+    public ArrayList<String> loadId() throws SQLException, ClassNotFoundException {
+        Connection connection = DBConnection.getDbConnection().getConnection();
+        PreparedStatement pstm = connection.prepareStatement("SELECT  code FROM item");
+        ResultSet set = pstm.executeQuery();
+        ArrayList<String> code=new ArrayList<>();
+        while (set.next()){
+            code.add(set.getString("code"));
+        }
+        set.close();
+        return code;
     }
 }
