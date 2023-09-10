@@ -213,6 +213,7 @@
                     </tr>
                     </thead>
                     <tbody class="bg-light text-dark" id="orderTable">
+
                     </tbody>
                 </table>
             </div>
@@ -472,25 +473,33 @@ console.log(code,byQty,qty,price);
         loadCustomerCode();
         loadItemCode();
         fillDate();
-        updateTotal();
+        $('#txtDiscount').on('keyup', function () {
+            updateTotals();
+        });
+
+        $('#txtCash').on('keyup', function () {
+            updateTotals();
+        });
         $("#selectItemCode").change(function () {
-            var code = $(this).val();
-            if (code) {
+            var code=$(this).val();
+            if (code){
                 searchItemDetail(code)
             }
         });
         $("#selectCusID").change(function () {
-            var id = $(this).val();
-            if (id) {
+            var id=$(this).val();
+            if (id){
                 searchCustomerDetail(id);
             }
         });
     });
 
     function fillDate() {
-        let date = new Date().toISOString().split('T')[0];
+        let date=new Date().toISOString().split('T')[0];
         $("#txtDate").val(date);
     }
+
+
 
 
     /*load Customer id*/
@@ -556,83 +565,64 @@ console.log(code,byQty,qty,price);
     /*Search customer*/
     function searchCustomerDetail(id) {
         $.ajax({
-            url: 'customer?option=search',
-            data: {cusId: id},
-            success: function (res) {
-                var cus = res.data;
+            url:'customer?option=search',
+            data: {cusId:id},
+            success:function (res) {
+                var cus=res.data;
                 $("#orderCustomerID").val(cus.id);
                 $("#orderCustomerName").val(cus.name);
                 $("#orderCustomerAddress").val(cus.address);
 
             },
-            error: function (error) {
+            error:function (error) {
                 console.log(error)
 
             }
 
         });
     }
-
     /*add to cart*/
-    orderItem = [];
+    orderItem=[];
     $("#btnAddToTable").click(function () {
         let code = $("#txtItemCode").val();
-        let name = $("#txtItemDescription").val();
-        let price = $("#txtItemPrice").val();
-        let qtyOnHand = $("#txtQTYOnHand").val();
-        let byq = $("#txtQty").val();
-        let total = parseInt(byq) * parseFloat(price);
+        let name=$("#txtItemDescription").val();
+        let price=$("#txtItemPrice").val();
+        let qtyOnHand=$("#txtQTYOnHand").val();
+        let byq=$("#txtQty").val();
+        let total=parseInt(byq)*parseFloat(price);
+        let row=`<tr><td>${code}</td><td>${name}</td><td>${price}</td><td>${qtyOnHand}</td><td>${byq}</td><td>${total}</td></tr>`;
+        $("#orderTable").append(row);
 
-        let newItem={
-            code: code,
-            name: name,
-            price: price,
-            qtyOnHand: qtyOnHand,
-            byq: byq,
-            total: total
-        };
-        orderItem.push(newItem)
-        updateOrderTable();
-        ClearValue();
+        orderItem.push({
+            code:code,
+            name:name,
+            price:price,
+            qtyOnHand:qtyOnHand,
+            byq:byq,
+            total:total
+        });
+        updateTotal();
     });
 
-    function updateOrderTable() {
-        let tableBody = $("#orderTable");
-        tableBody.empty();
-
-        for (let item of orderItem) {
-            let row = `<tr>
-            <td>${item.code}</td>
-            <td>${item.name}</td>
-            <td>${item.price}</td>
-            <td>${item.qtyOnHand}</td>
-            <td>${item.byq}</td>
-            <td>${item.total}</td>
-        </tr>`;
-            tableBody.append(row);
-        }
-    }
-
     function updateTotal() {
-        let allTotal = 0;
-        for (let i of orderItem) {
-            allTotal += i.total;
+        let allTotal=0;
+        for (let i of orderItem){
+            allTotal+=i.total;
         }
-        let subTotal = allTotal;
-        let cshAmount = parseFloat($("#txtCash").val()) || 0;
-        let discountAmount = parseFloat($("#txtDiscount").val()) || 0;
+        let subTotal=allTotal;
+        let cshAmount=parseFloat($("#txtCash").val()) || 0;
+        let discounAmount=parseFloat($("#txtDiscount").val()) ||0;
 
-        let balance = cshAmount - discountAmount - subTotal;
+        let balance=cshAmount-discounAmount-subTotal;
 
         $("#total").text(allTotal.toFixed(2));
         $("#subtotal").text(subTotal.toFixed(2));
         $("#txtBalance").val(balance.toFixed(2));
 
     }
-
     let disTOGave = 0;
 
-    $('#txtDiscount').on('keyup', function () {
+    $('#txtDiscount').on('keyup', function() {
         let dis = parseFloat($('#txtDiscount').val());
         let tot = parseFloat($('#txtBalance').val());
 
@@ -648,37 +638,56 @@ console.log(code,byQty,qty,price);
         updateTotal();
     });
 
-    /*exist item find */
-    function existItemAddToTable(item) {
-        let existingItem = orderItem.find((i) => i.code === item.code);
+    /*getOderDetail*/
+    function getAllOrderDetl() {
+        let rows=$("#orderTable").children().length;
+        let array=[];
+        for (let i = 0; i < rows; i++) {
+            let  code=$("#orderTable tr:eq("+i+") td:eq(0)").text();
+            let price=$("#orderTable tr:eq("+i+") td:eq(2)").text();
+            let buyQty=$("#orderTable tr:eq("+i+") td:eq(3)").text();
+            let qtyOnHnd=$("#orderTable tr:eq("+i+") td:eq(4)").text();
+            array.push({
+                code:code,
+                price:price,
+                buyQty:buyQty,
+                qtyOnHand:qtyOnHnd
+            })
 
-        if (existingItem) {
-            existingItem.byq += parseInt(item.byq);
-            existingItem.total = existingItem.byq * parseFloat(existingItem.price);
-        } else {
-            orderItem.push(item);
         }
-
-        updateOrderTable();
-        updateTotal();
+        return array;
     }
+    /*purchase Odr*/
+    $("#btnSubmitOrder").click(function () {
+        let oid = $("#txtOrderID").val();
+        let date = $("#txtDate").val();
+        let cusId=$("#orderCustomerID").val();
+        let odDetail=getAllOrderDetl();
 
-    function ClearValue() {
-        $("#txtOrderID").val("");
-        $("#txtDate").val("");
-        $("#txtItemCode").val("");
-        $("#txtItemDescription").val("");
-        $("#txtItemPrice").val("");
-        $("#txtQTYOnHand").val("");
-        $("#txtQty").val("");
-        $('#txtDiscount').val("");
-        $('#txtBalance').val("")
-        $("#orderCustomerID").val("");
-        $("#orderCustomerName").val("");
-        $("#orderCustomerAddress").val("");
-        let tableBody = $("#orderTable");
-        tableBody.empty();
-    }
+        let detail={
+            oid:oid,
+            date:date,
+            cusId:cusId,
+            odDetail:odDetail
+        }
+        $.ajax({
+            url:"purchase-order",
+            method:"post",
+            data: JSON.stringify(detail),
+            dataType:"json",
+            contentType: "application/json",
+success:function (res) {
+    alert(res.message);
+    console.log(res);
+}       ,
+error:function (error) {
+    alert(JSON.parse(error.responseText).message);
+    console.log(error);
+
+}
+        });
+
+    })
 </script>
 </body>
 </html>
