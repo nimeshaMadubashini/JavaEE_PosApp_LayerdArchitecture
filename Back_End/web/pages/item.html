@@ -220,19 +220,19 @@
     getAllItem();
 
     function blindClickEvent() {
-     $("#tblItem>tr").click(function () {
-         let code = $(this).children().eq(0).text();
-         let name = $(this).children().eq(1).text();
-         let qty = $(this).children().eq(2).text();
-         let price = $(this).children().eq(3).text();
+        $("#tblItem>tr").click(function () {
+            let code = $(this).children().eq(0).text();
+            let name = $(this).children().eq(1).text();
+            let qty = $(this).children().eq(2).text();
+            let price = $(this).children().eq(3).text();
 
-         $("#itemCode").val(code);
-        $("#itemName").val(name);
-          $("#itemQty").val(qty);
-          $("#itemPrice").val(price);
+            $("#itemCode").val(code);
+            $("#itemName").val(name);
+            $("#itemQty").val(qty);
+            $("#itemPrice").val(price);
 
 
-     })
+        })
     }
     $("#btnItem").click(function () {
         let formdata=$("#itemForm").serialize();
@@ -257,8 +257,9 @@
     function getAllItem() {
         $("#tblItem").empty();
         $.ajax({
-            url:"/pos/pages/item",
+            url:"/pos/pages/item?option=getAll",
             method:"get",
+            dataType: "json",
             success:function (res) {
                 let  item=res.data;
                 for (let i in item) {
@@ -319,19 +320,19 @@
 
     $("#btnItemDelete").click(function () {
         let code =$("#itemCode").val();
-            $.ajax({
-                url:"/pos/pages/item?code="+code,
-                method:"DELETE",
-                dataType: "json",
-                success:function (res) {
-                    alert(res.message);
-                    getAllItem();
-                    setTextFeildValueEmpty();
-                },
-                error:function (error) {
-                    alert(error.responseText.message)
-                }
-            });
+        $.ajax({
+            url:"/pos/pages/item?code="+code,
+            method:"DELETE",
+            dataType: "json",
+            success:function (res) {
+                alert(res.message);
+                getAllItem();
+                setTextFeildValueEmpty();
+            },
+            error:function (error) {
+                alert(error.responseText.message)
+            }
+        });
 
     })
 </script>

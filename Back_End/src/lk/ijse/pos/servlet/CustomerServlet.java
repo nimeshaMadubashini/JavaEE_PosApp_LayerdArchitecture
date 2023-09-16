@@ -9,6 +9,7 @@ import lk.ijse.pos.util.ResponseUtil;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 import javax.json.*;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -24,6 +25,7 @@ import java.util.List;
 public class CustomerServlet extends HttpServlet {
     private CustomerBO customerBO;
     private BasicDataSource pool;
+
     @Override
     public void init() throws ServletException {
         super.init();
@@ -32,59 +34,66 @@ public class CustomerServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        this.pool= ConnectionPoolManager.getInstance().getDataSource();
+        this.pool = ConnectionPoolManager.getInstance().getDataSource();
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try(Connection connection = pool.getConnection()) {
-            String option = req.getParameter("option");
-            switch (option) {
-                case "getAll":
-                    List<CustomerDTO> allCustomer = customerBO.getAllCustomer();
-                    JsonArrayBuilder allCus = Json.createArrayBuilder();
-                    for (CustomerDTO cus : allCustomer) {
-                        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-                        objectBuilder.add("id", cus.getId());
-                        objectBuilder.add("name", cus.getName());
-                        objectBuilder.add("address", cus.getAddress());
-                        allCus.add(objectBuilder.build());
-                    }
-                    resp.setContentType("application/json");
-                    resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully loaded", allCus.build()));
-                    break;
-                case "search":
-                    String code = req.getParameter("cusId");
-                    CustomerDTO dto = customerBO.searchCustomer(code);
-                    if (dto != null) {
-                        JsonObjectBuilder obj = Json.createObjectBuilder();
-                        obj.add("id", dto.getId());
-                        obj.add("name", dto.getName());
-                        obj.add("address", dto.getAddress());
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
+                String option = req.getParameter("option");
+                switch (option) {
+                    case "getAll":
+                        List<CustomerDTO> allCustomer = customerBO.getAllCustomer();
+                        JsonArrayBuilder allCus = Json.createArrayBuilder();
+                        for (CustomerDTO cus : allCustomer) {
+                            JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+                            objectBuilder.add("id", cus.getId());
+                            objectBuilder.add("name", cus.getName());
+                            objectBuilder.add("address", cus.getAddress());
+                            allCus.add(objectBuilder.build());
+                        }
                         resp.setContentType("application/json");
-                        JsonObjectBuilder responseObj1 = Json.createObjectBuilder();
-                        responseObj1.add("Status", "ok");
-                        responseObj1.add("message", "Successfully Loaded...!");
-                        responseObj1.add("data", obj.build());
-                        resp.getWriter().print(responseObj1.build());
-                    }
-                    break;
-                case "load":
-                    ArrayList<String> id = customerBO.loadCustomerId();
-                    JsonArrayBuilder all = Json.createArrayBuilder();
-                    for (String i : id) {
-                        JsonObjectBuilder ob = Json.createObjectBuilder();
-                        ob.add("id", i);
-                        all.add(ob);
-                    }
-                    resp.setContentType("application/json");
-                    resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully search", all.build()));
+                        resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully loaded", allCus.build()));
+                        break;
+                    case "search":
+                        String code = req.getParameter("cusId");
+                        CustomerDTO dto = customerBO.searchCustomer(code);
+                        if (dto != null) {
+                            JsonObjectBuilder obj = Json.createObjectBuilder();
+                            obj.add("id", dto.getId());
+                            obj.add("name", dto.getName());
+                            obj.add("address", dto.getAddress());
+                            resp.setContentType("application/json");
+                            JsonObjectBuilder responseObj1 = Json.createObjectBuilder();
+                            responseObj1.add("Status", "ok");
+                            responseObj1.add("message", "Successfully Loaded...!");
+                            responseObj1.add("data", obj.build());
+                            resp.getWriter().print(responseObj1.build());
+                        }
+                        break;
+                    case "load":
+                        ArrayList<String> id = customerBO.loadCustomerId();
+                        JsonArrayBuilder all = Json.createArrayBuilder();
+                        for (String i : id) {
+                            JsonObjectBuilder ob = Json.createObjectBuilder();
+                            ob.add("id", i);
+                            all.add(ob);
+                        }
+                        resp.setContentType("application/json");
+                        resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully search", all.build()));
+                }
+
+
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("error", e.getMessage()));
             }
-
-
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("error", e.getMessage()));
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
     }
 
@@ -96,35 +105,49 @@ public class CustomerServlet extends HttpServlet {
         String name = jbo.getString("name");
         String address = jbo.getString("address");
         CustomerDTO customerDTO = new CustomerDTO(id, name, address);
-        try {
-            if (customerBO.updateCustomer(customerDTO)) {
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
+                if (customerBO.updateCustomer(customerDTO)) {
 
-                resp.getWriter().print(ResponseUtil.getJson("Success", "Customer Updated..!"));
-            } else {
-                resp.getWriter().print(ResponseUtil.getJson("Failed", "Customer Updated Failed..!"));
+                    resp.getWriter().print(ResponseUtil.getJson("Success", "Customer Updated..!"));
+                } else {
+                    resp.getWriter().print(ResponseUtil.getJson("Failed", "Customer Updated Failed..!"));
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
-        try {
-            String cusID = req.getParameter("cusID");
-            String cusName = req.getParameter("cusName");
-            String cusAddress = req.getParameter("cusAddress");
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
+                String cusID = req.getParameter("cusID");
+                String cusName = req.getParameter("cusName");
+                String cusAddress = req.getParameter("cusAddress");
 
-            if (customerBO.saveCustomer(new CustomerDTO(cusID, cusName, cusAddress))) {
-                resp.getWriter().print(ResponseUtil.getJson("Success", "SuccessFully Added.."));
-            } else {
-                resp.getWriter().print(ResponseUtil.getJson("error", "Customer Added Fail"));
+                if (customerBO.saveCustomer(new CustomerDTO(cusID, cusName, cusAddress))) {
+                    resp.getWriter().print(ResponseUtil.getJson("Success", "SuccessFully Added.."));
+                } else {
+                    resp.getWriter().print(ResponseUtil.getJson("error", "Customer Added Fail"));
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("error", e.getMessage()));
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("error", e.getMessage()));
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
     }
 
@@ -132,17 +155,24 @@ public class CustomerServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
         String id = req.getParameter("cusID");
-        try {
-            if (customerBO.deleteCustomer(id)) {
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
+                if (customerBO.deleteCustomer(id)) {
 
-                resp.getWriter().print(ResponseUtil.getJson("Success", "Customer Delete..!"));
-            } else {
-                resp.getWriter().print(ResponseUtil.getJson("Failed", "Customer Delete Failed..!"));
+                    resp.getWriter().print(ResponseUtil.getJson("Success", "Customer Delete..!"));
+                } else {
+                    resp.getWriter().print(ResponseUtil.getJson("Failed", "Customer Delete Failed..!"));
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
-        }
 
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
+        }
     }
 }

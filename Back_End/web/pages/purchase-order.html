@@ -676,15 +676,15 @@ console.log(code,byQty,qty,price);
             data: JSON.stringify(detail),
             dataType:"json",
             contentType: "application/json",
-success:function (res) {
-    alert(res.message);
-    console.log(res);
-}       ,
-error:function (error) {
-    alert(JSON.parse(error.responseText).message);
-    console.log(error);
+            success:function (res) {
+                alert(res.message);
+                console.log(res);
+            }       ,
+            error:function (error) {
+                alert(JSON.parse(error.responseText).message);
+                console.log(error);
 
-}
+            }
         });
 
     })

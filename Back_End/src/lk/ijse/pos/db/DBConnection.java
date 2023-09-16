@@ -1,3 +1,4 @@
+/*
 package lk.ijse.pos.db;
 
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -29,3 +30,4 @@ BasicDataSource dataSource;
         return dataSource.getConnection();
     }
 }
+*/

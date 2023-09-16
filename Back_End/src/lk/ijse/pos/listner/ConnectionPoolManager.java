@@ -13,7 +13,7 @@ private BasicDataSource pool;
         pool.setUsername("root");
         pool.setPassword("1234");
         pool.setInitialSize(3);
-        pool.setMaxTotal(3);
+        pool.setMaxTotal(10);
     }
 
     public static ConnectionPoolManager getInstance() {

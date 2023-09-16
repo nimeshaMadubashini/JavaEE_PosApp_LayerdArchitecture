@@ -3,6 +3,7 @@ package lk.ijse.pos.dao.custom.impl;
 import lk.ijse.pos.dao.custom.CustomerDAO;
 import lk.ijse.pos.entity.Customer;
 import lk.ijse.pos.entity.Item;
+import lk.ijse.pos.listner.ConnectionPoolManager;
 import lk.ijse.pos.util.CrudUtil;
 
 
@@ -25,8 +26,9 @@ public class CustomerDAOImpl implements CustomerDAO {
 
     @Override
     public ResultSet getAll(Connection connection) throws SQLException, ClassNotFoundException {
-
-        ResultSet resultSet = crudUtil.execute("SELECT * FROM customer");
+        connection = ConnectionPoolManager.getInstance().getDataSource().getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM customer");
         return resultSet;
     }
 
@@ -44,9 +46,10 @@ public class CustomerDAOImpl implements CustomerDAO {
 
     @Override
     public Customer search(Connection connection, String id) throws SQLException, ClassNotFoundException {
-
-        ResultSet set = crudUtil.execute("SELECT  * FROM customer WHERE id=?", id);
-        if (set.next()) {
+        PreparedStatement pstm = connection.prepareStatement("SELECT  * FROM customer WHERE id=?");
+        pstm.setString(1,id);
+        ResultSet set = pstm.executeQuery();
+        if (set.next()){
             return new Customer(
                     set.getString("id"),
                     set.getString("name"),
@@ -55,20 +58,25 @@ public class CustomerDAOImpl implements CustomerDAO {
             );
 
         }
+        set.close();
         return null;
     }
 
 
     @Override
     public ArrayList<String> loadId(Connection connection) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT id  FROM customer";
-        ResultSet rest = crudUtil.execute(sql);
-        ArrayList<String> idList = new ArrayList<>();
-        while (rest.next()) {
+        String sql="SELECT id  FROM customer";
+        PreparedStatement pstm = connection.prepareStatement(sql);
+        ResultSet rest = pstm.executeQuery();
+        ArrayList<String> idList=new ArrayList<>();
+        while (rest.next()){
             idList.add(rest.getString(1));
         }
+        rest.close();
         return idList;
     }
 
 }
+
+
 

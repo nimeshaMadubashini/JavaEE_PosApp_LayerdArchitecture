@@ -25,6 +25,7 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
+        super.init();
         try {
             itemBO = (ItemBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.Item);
             if (itemBO == null) {
@@ -39,57 +40,71 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-            String option = req.getParameter("option");
-            switch (option) {
-                case "getAll":
-                    List<ItemDTO> allItem = itemBO.getAllItem();
-                    JsonArrayBuilder all = Json.createArrayBuilder();
-                    for (ItemDTO i : allItem) {
-                        JsonObjectBuilder obj = Json.createObjectBuilder();
-                        obj.add("code", i.getCode());
-                        obj.add("name", i.getName());
-                        obj.add("qty", i.getQty());
-                        obj.add("price", i.getPrice());
-                        all.add(obj);
-                    }
-                    resp.setContentType("application/json");
-                    resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully loaded", all.build()));
-                    break;
-                case "search":
-                    String code = req.getParameter("code");
-                    ItemDTO itemDTO = itemBO.searchItem(code);
-                    if (itemDTO != null) {
-                        JsonObjectBuilder obj = Json.createObjectBuilder();
-                        obj.add("code", itemDTO.getCode());
-                        obj.add("name", itemDTO.getName());
-                        obj.add("qty", itemDTO.getQty());
-                        obj.add("price", itemDTO.getPrice());
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
+                String option = req.getParameter("option");
+                switch (option) {
+                    case "getAll":
+                        List<ItemDTO> allItem = itemBO.getAllItem();
+                        JsonArrayBuilder all = Json.createArrayBuilder();
+                        for (ItemDTO i : allItem) {
+                            JsonObjectBuilder obj = Json.createObjectBuilder();
+                            obj.add("code", i.getCode());
+                            obj.add("name", i.getName());
+                            obj.add("qty", i.getQty());
+                            obj.add("price", i.getPrice());
+                            all.add(obj.build());
+                        }
                         resp.setContentType("application/json");
+                        resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully loaded", all.build()));
 
-                        JsonObjectBuilder responseObj1 = Json.createObjectBuilder();
-                        responseObj1.add("Status", "ok");
-                        responseObj1.add("message", "Successfully Loaded...!");
-                        responseObj1.add("data", obj.build());
-                        resp.getWriter().print(responseObj1.build());
-                    }
-                    break;
-                case "load":
-                    ArrayList<String> itemId = itemBO.loadItemId();
-                    JsonArrayBuilder arrayBuilder=Json.createArrayBuilder();
-                    for (String id: itemId) {
-                        JsonObjectBuilder obj=Json.createObjectBuilder();
-                        obj.add("code",id);
-                        arrayBuilder.add(obj);
-                    }
-                    resp.setContentType("application/json");
-                    resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully search", arrayBuilder.build()));
+                        break;
+                    case "search":
+                        String code = req.getParameter("code");
+                        ItemDTO itemDTO = itemBO.searchItem(code);
+                        if (itemDTO != null) {
+                            JsonObjectBuilder obj = Json.createObjectBuilder();
+                            obj.add("code", itemDTO.getCode());
+                            obj.add("name", itemDTO.getName());
+                            obj.add("qty", itemDTO.getQty());
+                            obj.add("price", itemDTO.getPrice());
+                            resp.setContentType("application/json");
+
+                            JsonObjectBuilder responseObj1 = Json.createObjectBuilder();
+                            responseObj1.add("Status", "ok");
+                            responseObj1.add("message", "Successfully Loaded...!");
+                            responseObj1.add("data", obj.build());
+                            resp.getWriter().print(responseObj1.build());
+                        }
+                        break;
+                    case "load":
+                        ArrayList<String> itemId = itemBO.loadItemId();
+                        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+                        for (String id : itemId) {
+                            JsonObjectBuilder obj = Json.createObjectBuilder();
+                            obj.add("code", id);
+                            arrayBuilder.add(obj);
+                        }
+                        resp.setContentType("application/json");
+                        resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully search", arrayBuilder.build()));
+                        break;
+
+                    default:
+                        System.out.println("Invalid 'option' parameter.");
+                        resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        resp.getWriter().print(ResponseUtil.getJson("Fail", "Invalid 'option' parameter"));
+                }
+
+
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("error", e.getMessage()));
             }
-
-
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("error", e.getMessage()));
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
     }
 
@@ -98,7 +113,7 @@ public class ItemServlet extends HttpServlet {
         resp.setContentType("application/json");
         ServletContext servletContext = getServletContext();
         BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
-        if(pool !=null) {
+        if (pool != null) {
             try (Connection connection = pool.getConnection()) {
                 String code = req.getParameter("code");
                 String description = req.getParameter("description");
@@ -115,7 +130,7 @@ public class ItemServlet extends HttpServlet {
                 resp.setStatus(500);
                 resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
             }
-        }else {
+        } else {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().println("Database connection pool not initialized.");
         }
@@ -129,17 +144,24 @@ public class ItemServlet extends HttpServlet {
         String name = jsonObject.getString("name");
         double qty = Double.parseDouble(jsonObject.getString("qty"));
         double price = Double.parseDouble(jsonObject.getString("price"));
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
 
-        try {
-            if (itemBO.updateItem(new ItemDTO(code, name, qty, price))) {
-                resp.getWriter().print(ResponseUtil.getJson("Success", "update Success"));
-            } else {
-                resp.getWriter().print(ResponseUtil.getJson("fail", "update Fail"));
+                if (itemBO.updateItem(new ItemDTO(code, name, qty, price))) {
+                    resp.getWriter().print(ResponseUtil.getJson("Success", "update Success"));
+                } else {
+                    resp.getWriter().print(ResponseUtil.getJson("fail", "update Fail"));
+                }
+
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
             }
-
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
     }
 
@@ -147,15 +169,23 @@ public class ItemServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
         String code = req.getParameter("code");
-        try {
-            if (itemBO.deleteItem(code)) {
-                resp.getWriter().print(ResponseUtil.getJson("Success", "Delete Success"));
-            } else {
-                resp.getWriter().print(ResponseUtil.getJson("fail", "Delete Fail"));
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if (pool != null) {
+            try (Connection connection = pool.getConnection()) {
+                if (itemBO.deleteItem(code)) {
+                    resp.getWriter().print(ResponseUtil.getJson("Success", "Delete Success"));
+                } else {
+                    resp.getWriter().print(ResponseUtil.getJson("fail", "Delete Fail"));
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
+        } else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
+
     }
 }
