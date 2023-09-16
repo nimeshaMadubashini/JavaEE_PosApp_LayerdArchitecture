@@ -211,25 +211,6 @@ alert(JSON.parse(error.responseText).message);
 </script>
 -->
 <script>
-    /* $("#btnCustomer").click(function () {
-         SaveCustomer();
-
-     });
-     function SaveCustomer() {
-         let formData=$("#cusForm").serialize();
-         $.ajax({
-             url:"/pos/pages/customer",
-             method:"post",
-             data:formData,
-             dataType:"json",
-             success:function (res) {
-                 alert(res.message);
-             },
-             error:function (error){
-                 alert(error.responseJSON.message);
-             }
-         });
-     }*/
     getAllcustomer();
     $("#btnCustomer").click(function () {
         let formData = $("#cusForm").serialize();
