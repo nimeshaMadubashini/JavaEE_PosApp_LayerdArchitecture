@@ -14,8 +14,8 @@ BasicDataSource dataSource;
         dataSource.setUrl("jdbc:mysql://localhost:3306/AssCompany");
         dataSource.setPassword("1234");
         dataSource.setUsername("root");
-        dataSource.setMaxTotal(5);
-        dataSource.setInitialSize(5);
+        dataSource.setMaxTotal(7);
+        dataSource.setInitialSize(7);
         Connection connection=dataSource.getConnection();
     }
 

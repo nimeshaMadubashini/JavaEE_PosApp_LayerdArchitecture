@@ -4,14 +4,17 @@ import lk.ijse.pos.bo.BOFactory;
 import lk.ijse.pos.bo.custom.ItemBO;
 import lk.ijse.pos.dto.ItemDTO;
 import lk.ijse.pos.util.ResponseUtil;
+import org.apache.commons.dbcp2.BasicDataSource;
 
 import javax.json.*;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +25,16 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        itemBO = (ItemBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.Item);
+        try {
+            itemBO = (ItemBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.Item);
+            if (itemBO == null) {
+                System.out.println("itemBO is null. Check BOFactory configuration.");
+            } else {
+                System.out.println("itemBO initialized successfully.");
+            }
+        } catch (SQLException e) {
+            throw new ServletException("Error initializing ItemBO", e);
+        }
     }
 
     @Override
@@ -84,21 +96,28 @@ public class ItemServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
-        try {
-            String code = req.getParameter("code");
-            String description = req.getParameter("description");
-            double qty = Double.parseDouble(req.getParameter("qty"));
-            double unitPrice = Double.parseDouble(req.getParameter("unitPrice"));
+        ServletContext servletContext = getServletContext();
+        BasicDataSource pool = (BasicDataSource) servletContext.getAttribute("dbcp");
+        if(pool !=null) {
+            try (Connection connection = pool.getConnection()) {
+                String code = req.getParameter("code");
+                String description = req.getParameter("description");
+                double qty = Double.parseDouble(req.getParameter("qty"));
+                double unitPrice = Double.parseDouble(req.getParameter("unitPrice"));
 
-            if (itemBO.saveItem(new ItemDTO(code, description, qty, unitPrice))) {
-                resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully added item"));
-            } else {
-                resp.getWriter().print(ResponseUtil.getJson("Fail", "Fail added item"));
+                if (itemBO.saveItem(new ItemDTO(code, description, qty, unitPrice))) {
+                    resp.getWriter().print(ResponseUtil.getJson("Success", "Successfully added item"));
+                } else {
+                    resp.getWriter().print(ResponseUtil.getJson("Fail", "Fail added item"));
 
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                resp.setStatus(500);
+                resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            resp.setStatus(500);
-            resp.getWriter().print(ResponseUtil.getJson("Error", e.getMessage()));
+        }else {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Database connection pool not initialized.");
         }
     }
 

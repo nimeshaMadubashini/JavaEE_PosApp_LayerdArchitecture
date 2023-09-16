@@ -4,7 +4,9 @@ import lk.ijse.pos.bo.BOFactory;
 import lk.ijse.pos.bo.custom.CustomerBO;
 import lk.ijse.pos.dto.CustomerDTO;
 import lk.ijse.pos.dto.ItemDTO;
+import lk.ijse.pos.listner.ConnectionPoolManager;
 import lk.ijse.pos.util.ResponseUtil;
+import org.apache.commons.dbcp2.BasicDataSource;
 
 import javax.json.*;
 import javax.servlet.ServletException;
@@ -13,6 +15,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,17 +23,21 @@ import java.util.List;
 @WebServlet(urlPatterns = "/pages/customer")
 public class CustomerServlet extends HttpServlet {
     private CustomerBO customerBO;
-
+    private BasicDataSource pool;
     @Override
     public void init() throws ServletException {
         super.init();
-        customerBO = (CustomerBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.Customer);
-
+        try {
+            customerBO = (CustomerBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.Customer);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        this.pool= ConnectionPoolManager.getInstance().getDataSource();
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
+        try(Connection connection = pool.getConnection()) {
             String option = req.getParameter("option");
             switch (option) {
                 case "getAll":

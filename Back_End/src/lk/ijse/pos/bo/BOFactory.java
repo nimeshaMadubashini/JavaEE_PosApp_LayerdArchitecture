@@ -4,6 +4,8 @@ import lk.ijse.pos.bo.custom.impl.CustomerBOImp;
 import lk.ijse.pos.bo.custom.impl.ItemBOImpl;
 import lk.ijse.pos.bo.custom.impl.PurchaseOrderCOImpl;
 
+import java.sql.SQLException;
+
 public class BOFactory {
     private static BOFactory boFactory;
 
@@ -19,7 +21,7 @@ public class BOFactory {
     public enum BoType{
         Customer,Item,PurchaseOrder
     }
-    public SuperBO getBoType(BOFactory.BoType boType){
+    public SuperBO getBoType(BOFactory.BoType boType) throws SQLException {
         switch (boType){
             case Customer:
                 return (SuperBO) new CustomerBOImp();

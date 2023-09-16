@@ -5,6 +5,8 @@ import lk.ijse.pos.dao.custom.impl.CustomerDAOImpl;
 import lk.ijse.pos.dao.custom.impl.OderDAOImpl;
 import lk.ijse.pos.dao.custom.impl.OrderDetailDAOImpl;
 
+import java.sql.SQLException;
+
 public class DAOFactory {
     private static DAOFactory daoFactory;
 
@@ -20,7 +22,7 @@ public class DAOFactory {
     public enum DoType{
         Customer,Item,Order,OrDetail
     }
-     public SuperDAO getDo(DAOFactory.DoType doType){
+     public SuperDAO getDo(DAOFactory.DoType doType) throws SQLException {
 switch (doType){
     case Customer:
         return (SuperDAO) new CustomerDAOImpl();

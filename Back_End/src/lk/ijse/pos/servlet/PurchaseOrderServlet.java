@@ -27,7 +27,11 @@ public class PurchaseOrderServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-      orderBO = (PurchaseOderBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.PurchaseOrder);
+        try {
+            orderBO = (PurchaseOderBO) BOFactory.getBoFactory().getBoType(BOFactory.BoType.PurchaseOrder);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
